@@ -1,5 +1,5 @@
 local m1=loadstring(game:HttpGet("https://raw.githubusercontent.com/TynaRan/ShadowDarkness/main/Loader.lua"))()
-local m2=m1.Window.new("Criminality UI")
+local m2=m1.Window.new("CrimDev v1.0")
 local m3=m2:AddTab("Main")
 local m4=m3:AddSection("left","Combat")
 local m5=m3:AddSection("right","Security")
@@ -321,7 +321,7 @@ local function Skeleton(player)
   end
  end
 end
-local tab=win:AddTab("Visual")
+local tab=m2:AddTab("Visual")
 local sec=tab:AddSection("right","Drawing")
 
 sec:AddTextbox("Line Thickness","1",function(v)Settings.Thickness=tonumber(v)or 1 end)

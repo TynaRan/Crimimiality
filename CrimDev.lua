@@ -390,3 +390,9 @@ m4:AddToggle("Silent Aim",false,function(v)
   m5b.Silent=false
  end
 end)  
+m4:AddToggle("Infinite Stamina",false,function(v)
+ if v then
+  local f=getupvalue(getupvalue(getrenv()._G.S_Take,2),1)
+  hookfunction(f,function()return 100,100 end)
+ end
+end)

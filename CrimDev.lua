@@ -242,3 +242,105 @@ m4:AddToggle("Infinite Stamina",false,function(v)
   hookfunction(f,function()return 100,100 end)
  end
 end)
+local Settings = {
+ Thickness = 2,
+ VisibleColor = Color3.fromRGB(0,255,0),
+ HiddenColor = Color3.fromRGB(120,120,120),
+ HPBarWidth = 4,
+ HPBarHeight = 60
+}
+local Drawn = {}
+local Loop = nil
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
+
+local function GetVisible(part)
+ local rayParams = RaycastParams.new()
+ rayParams.FilterDescendantsInstances = {Players.LocalPlayer.Character}
+ rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+ local result = workspace:Raycast(Camera.CFrame.Position, (part.Position - Camera.CFrame.Position).Unit * 500, rayParams)
+ return not result or result.Instance:IsDescendantOf(part.Parent)
+end
+
+local function Skeleton(player)
+ if not player.Character then return end
+ local limbs = {
+  {player.Character:FindFirstChild("Head"), player.Character:FindFirstChild("Torso")},
+  {player.Character:FindFirstChild("Torso"), player.Character:FindFirstChild("Left Arm")},
+  {player.Character:FindFirstChild("Torso"), player.Character:FindFirstChild("Right Arm")},
+  {player.Character:FindFirstChild("Torso"), player.Character:FindFirstChild("Left Leg")},
+  {player.Character:FindFirstChild("Torso"), player.Character:FindFirstChild("Right Leg")}
+ }
+ if not Drawn[player] then
+  Drawn[player] = {Lines={},HPBar=nil}
+  for i = 1, #limbs do
+   local l = Drawing.new("Line")
+   l.Thickness = Settings.Thickness
+   l.Visible = false
+   Drawn[player].Lines[i] = l
+  end
+  local bar = Drawing.new("Line")
+  bar.Thickness = Settings.HPBarWidth
+  bar.Visible = false
+  Drawn[player].HPBar = bar
+ end
+ for i, pair in ipairs(limbs) do
+  local a,b = pair[1],pair[2]
+  if a and b then
+   local aPos,onA = Camera:WorldToViewportPoint(a.Position)
+   local bPos,onB = Camera:WorldToViewportPoint(b.Position)
+   local visA = GetVisible(a)
+   local visB = GetVisible(b)
+   if onA and onB then
+    local d = Drawn[player].Lines[i]
+    d.From = Vector2.new(aPos.X, aPos.Y)
+    d.To = Vector2.new(bPos.X, bPos.Y)
+    d.Color = visA and visB and Settings.VisibleColor or Settings.HiddenColor
+    d.Visible = true
+   else
+    Drawn[player].Lines[i].Visible = false
+   end
+  end
+ end
+ local head = player.Character:FindFirstChild("Head")
+ local hum = player.Character:FindFirstChild("Humanoid")
+ if head and hum then
+  local pos, on = Camera:WorldToViewportPoint(head.Position)
+  if on then
+   local ratio = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+   local top = Vector2.new(pos.X - 30, pos.Y - 25)
+   local bottom = Vector2.new(pos.X - 30, pos.Y - 25 + Settings.HPBarHeight * ratio)
+   local clr = Color3.fromRGB(255 * (1 - ratio),255 * ratio,0)
+   local bar = Drawn[player].HPBar
+   bar.From = top
+   bar.To = bottom
+   bar.Color = clr
+   bar.Visible = true
+  else
+   Drawn[player].HPBar.Visible = false
+  end
+ end
+end
+local tab=win:AddTab("Visual")
+local sec=tab:AddSection("right","Drawing")
+
+sec:AddTextbox("Line Thickness","1",function(v)Settings.Thickness=tonumber(v)or 1 end)
+sec:AddTextbox("Visible Color RGB","0,255,0",function(v)local r,g,b=v:match("(%d+),(%d+),(%d+)")Settings.VisibleColor=Color3.fromRGB(tonumber(r),tonumber(g),tonumber(b))end)
+sec:AddTextbox("Hidden Color RGB","120,120,120",function(v)local r,g,b=v:match("(%d+),(%d+),(%d+)")Settings.HiddenColor=Color3.fromRGB(tonumber(r),tonumber(g),tonumber(b))end)
+
+sec:AddToggle("Bone + HPBar Drawing",false,function(v)
+ if v then
+  Loop = game:GetService("RunService").RenderStepped:Connect(function()
+   for _,p in pairs(Players:GetPlayers())do
+    if p~=Players.LocalPlayer then Skeleton(p)end
+   end
+  end)
+ else
+  if Loop then Loop:Disconnect() Loop=nil end
+  for _,pack in pairs(Drawn)do
+   for _,l in pairs(pack.Lines)do l:Remove()end
+   pack.HPBar:Remove()
+  end
+  Drawn = {}
+ end
+end)

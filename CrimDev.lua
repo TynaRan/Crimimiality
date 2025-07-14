@@ -344,3 +344,38 @@ sec:AddToggle("Bone + HPBar Drawing",false,function(v)
   Drawn = {}
  end
 end)
+local Players=game:GetService("Players")
+local LocalPlayer=Players.LocalPlayer
+local Replicated=game:GetService("ReplicatedStorage")
+local RunService=game:GetService("RunService")
+local auraLoop=nil
+local utf8="\240\159\154\168"
+local targetPart="HumanoidRootPart"
+local range=20
+
+m4:AddToggle("Kill Aura",false,function(v)
+ if v then
+  auraLoop=RunService.RenderStepped:Connect(function()
+   local tool=LocalPlayer.Character:FindFirstChildOfClass("Tool")
+   if not tool then return end
+   local arm=LocalPlayer.Character:FindFirstChild("Right Arm")
+   if not arm then return end
+
+   local closest=nil
+   for _,p in ipairs(Players:GetPlayers())do
+    if p~=LocalPlayer and p.Character and p.Character:FindFirstChild(targetPart) and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health>15 and not p.Character:FindFirstChildOfClass("ForceField") then
+     local d=(LocalPlayer.Character.HumanoidRootPart.Position - p.Character[targetPart].Position).Magnitude
+     if d<range then closest=p.Character[targetPart] break end
+    end
+   end
+   if closest then
+    local pos=Vector3.new(closest.Position.X,closest.Position.Y,closest.Position.Z)
+    Replicated.Events["XMHH.1"]:InvokeServer(utf8,tick(),tool,"43TRFWJ","Normal",tick(),true)
+    Replicated.Events["XMHH2.1"]:FireServer(utf8,tick(),tool,"2389ZFX33",nil,false,
+     arm,closest,closest.Parent,arm.Position,pos)
+   end
+  end)
+ else
+  if auraLoop then auraLoop:Disconnect()auraLoop=nil end
+ end
+end)

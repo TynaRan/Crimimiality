@@ -322,7 +322,7 @@ local function Skeleton(player)
  end
 end
 local tab=m2:AddTab("Visual")
-local sec=tab:AddSection("right","Drawing")
+local sec=tab:AddSection("left","Drawing")
 
 sec:AddTextbox("Line Thickness","1",function(v)Settings.Thickness=tonumber(v)or 1 end)
 sec:AddTextbox("Visible Color RGB","0,255,0",function(v)local r,g,b=v:match("(%d+),(%d+),(%d+)")Settings.VisibleColor=Color3.fromRGB(tonumber(r),tonumber(g),tonumber(b))end)
@@ -344,38 +344,32 @@ sec:AddToggle("Bone + HPBar Drawing",false,function(v)
   Drawn = {}
  end
 end)
-local Players=game:GetService("Players")
-local LocalPlayer=Players.LocalPlayer
-local Replicated=game:GetService("ReplicatedStorage")
-local RunService=game:GetService("RunService")
-local auraLoop=nil
-local utf8="\240\159\154\168"
-local targetPart="HumanoidRootPart"
-local range=20
+m4:AddTextbox("WalkSpeed", "20", function(v)
+ Config.WalkSpeed = tonumber(v) or 16
+end)
 
-m4:AddToggle("Kill Aura",false,function(v)
- if v then
-  auraLoop=RunService.RenderStepped:Connect(function()
-   local tool=LocalPlayer.Character:FindFirstChildOfClass("Tool")
-   if not tool then return end
-   local arm=LocalPlayer.Character:FindFirstChild("Right Arm")
-   if not arm then return end
+m4:AddTextbox("FOV", "80", function(v)
+ Config.FieldOfView = tonumber(v) or 70
+end)
 
-   local closest=nil
-   for _,p in ipairs(Players:GetPlayers())do
-    if p~=LocalPlayer and p.Character and p.Character:FindFirstChild(targetPart) and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health>15 and not p.Character:FindFirstChildOfClass("ForceField") then
-     local d=(LocalPlayer.Character.HumanoidRootPart.Position - p.Character[targetPart].Position).Magnitude
-     if d<range then closest=p.Character[targetPart] break end
-    end
+m4:AddToggle("Loop Speed/FOV", false, function(state)
+ if state then
+  loop = RunService.RenderStepped:Connect(function()
+   if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+    LocalPlayer.Character.Humanoid.WalkSpeed = Config.WalkSpeed
    end
-   if closest then
-    local pos=Vector3.new(closest.Position.X,closest.Position.Y,closest.Position.Z)
-    Replicated.Events["XMHH.1"]:InvokeServer(utf8,tick(),tool,"43TRFWJ","Normal",tick(),true)
-    Replicated.Events["XMHH2.1"]:FireServer(utf8,tick(),tool,"2389ZFX33",nil,false,
-     arm,closest,closest.Parent,arm.Position,pos)
-   end
+   Camera.FieldOfView = Config.FieldOfView
   end)
  else
-  if auraLoop then auraLoop:Disconnect()auraLoop=nil end
+  if loop then loop:Disconnect() loop = nil end
+ end
+end)
+m5:AddToggle("No WalkSpeed Detection", false, function(state)
+ if state then
+  for _, v in pairs(getgc(true)) do
+   if typeof(v) == "table" and rawget(v, "DTXC1") then
+    hookfunction(v.DTXC1, function() return end)
+   end
+  end
  end
 end)

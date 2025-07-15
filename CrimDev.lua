@@ -344,6 +344,17 @@ sec:AddToggle("Bone + HPBar Drawing",false,function(v)
   Drawn = {}
  end
 end)
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+
+local Config = {
+ WalkSpeed = 20,
+ FieldOfView = 80
+}
+
+local loop
 m4:AddTextbox("WalkSpeed", "20", function(v)
  Config.WalkSpeed = tonumber(v) or 16
 end)

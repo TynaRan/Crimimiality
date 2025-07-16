@@ -13,7 +13,7 @@ if not m5a.Mobile then
 end
 m4:AddToggle("Smooth Toggle",true,function(v)m5a.Smooth=v end)
 
-m4:AddToggle("Camlock",false,function(v)
+m4:AddToggle("Camlock(PC)",false,function(v)
  m5a.Camlock=v
  if v then
   local p=game:GetService("Players")
@@ -51,7 +51,128 @@ m4:AddToggle("Camlock",false,function(v)
   if m6 then m6:Disconnect()m6=nil end
  end
 end)
+local v1 = {Camlock = false}
+local v2 = {Smooth = false, SmoothValue = 0.1} 
+local v3 = {Key = Enum.KeyCode.N, Mobile = false}
+local v4 = nil
+local ui = nil
 
+m4:AddToggle("Camlock(Mobi)",false,function(v)
+    v1.Camlock = v
+    
+    if v then
+        ui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+        ui.Name = "CamlockUI"
+
+        local frame = Instance.new("Frame", ui)
+        frame.Size = UDim2.new(0, 150, 0, 50)
+        frame.Position = UDim2.new(1, -160, 0, 20)
+        frame.BackgroundColor3 = Color3.new(1, 1, 1)
+        frame.BorderSizePixel = 0
+        frame.Active = true
+        frame.Draggable = true
+
+        local corner = Instance.new("UICorner", frame)
+        corner.CornerRadius = UDim.new(0, 6)
+
+        local shadow = Instance.new("ImageLabel", frame)
+        shadow.Name = "Shadow"
+        shadow.BackgroundTransparency = 1
+        shadow.Image = "rbxassetid://1316045217"
+        shadow.ImageColor3 = Color3.new(0, 0, 0)
+        shadow.ImageTransparency = 0.8
+        shadow.ScaleType = Enum.ScaleType.Slice
+        shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+        shadow.Size = UDim2.new(1, 10, 1, 10)
+        shadow.Position = UDim2.new(0, -5, 0, -5)
+        shadow.ZIndex = -1
+
+        local title = Instance.new("TextLabel", frame)
+        title.Text = "Camlock"
+        title.Size = UDim2.new(1, 0, 0, 20)
+        title.Position = UDim2.new(0, 0, 0, 5)
+        title.BackgroundTransparency = 1
+        title.TextColor3 = Color3.new(0, 0, 0)
+        title.Font = Enum.Font.GothamBold
+        title.TextSize = 14
+
+        local hotkey = Instance.new("TextLabel", frame)
+        hotkey.Text = "Hotkey: ["..tostring(v3.Key).."]"
+        hotkey.Size = UDim2.new(1, 0, 0, 20)
+        hotkey.Position = UDim2.new(0, 0, 0, 25)
+        hotkey.BackgroundTransparency = 1
+        hotkey.TextColor3 = Color3.new(0.5, 0.5, 0.5)
+        hotkey.Font = Enum.Font.Gotham
+        hotkey.TextSize = 12
+
+        local toggleBtn = Instance.new("TextButton", frame)
+        toggleBtn.Text = "OFF"
+        toggleBtn.Size = UDim2.new(0, 40, 0, 20)
+        toggleBtn.Position = UDim2.new(1, -45, 0, 5)
+        toggleBtn.BackgroundColor3 = Color3.new(0.9, 0.2, 0.2)
+        toggleBtn.TextColor3 = Color3.new(1, 1, 1)
+        toggleBtn.Font = Enum.Font.GothamBold
+        toggleBtn.TextSize = 12
+
+        toggleBtn.MouseButton1Click:Connect(function()
+            v1.Camlock = not v1.Camlock
+            if v1.Camlock then
+                toggleBtn.Text = "ON"
+                toggleBtn.BackgroundColor3 = Color3.new(0.2, 0.9, 0.2)
+            else
+                toggleBtn.Text = "OFF"
+                toggleBtn.BackgroundColor3 = Color3.new(0.9, 0.2, 0.2)
+                if v4 then v4:Disconnect() v4=nil end
+            end
+        end)
+
+        local p = game:GetService("Players")
+        local u = game:GetService("UserInputService")
+        local r = workspace.CurrentCamera
+        local s = game:GetService("RunService")
+        local l = p.LocalPlayer
+
+        local function getTarget()
+            local t,d = nil,1e9
+            for _,x in pairs(p:GetPlayers())do
+                if x~=l and x.Character and x.Character:FindFirstChild("HumanoidRootPart") and x.Character:FindFirstChild("Humanoid") and x.Character.Humanoid.Health>0 then
+                    local part = x.Character.HumanoidRootPart
+                    local dist = (l.Character.HumanoidRootPart.Position-part.Position).Magnitude
+                    if dist<d then t=part d=dist end
+                end
+            end
+            return t
+        end
+
+        v4 = s.RenderStepped:Connect(function()
+            if v1.Camlock then
+                local t = getTarget()
+                if t then
+                    local cf = CFrame.new(r.CFrame.Position,t.Position)
+                    r.CFrame = v2.Smooth and r.CFrame:Lerp(cf,v2.SmoothValue) or cf
+                end
+            end
+        end)
+
+        if not v3.Mobile then
+            u.InputBegan:Connect(function(i,g)
+                if not g and i.KeyCode == v3.Key then
+                    v1.Camlock = not v1.Camlock
+                    if v1.Camlock then
+                        toggleBtn.Text = "ON"
+                        toggleBtn.BackgroundColor3 = Color3.new(0.2, 0.9, 0.2)
+                    else
+                        toggleBtn.Text = "OFF"
+                        toggleBtn.BackgroundColor3 = Color3.new(0.9, 0.2, 0.2)
+                    end
+                end
+            end)
+        end
+    else
+        if v4 then v4:Disconnect() v4=nil end
+        if ui then ui:Destroy() ui=nil end
+    end
+end)
 m4:AddToggle("ESP",false,function(v)
  if v then
   local m6=game:GetService("Players")
@@ -384,3 +505,8 @@ m5:AddToggle("No WalkSpeed Detection", false, function(state)
   end
  end
 end)
+local taba = window:AddTab("Info")
+local left = taba:AddSection("left", "Credits")
+left:AddLabel("Credits:")
+left:AddLabel("TynaRan")
+left:AddLabel("Conglinduan")

@@ -1,8 +1,8 @@
 local m1=loadstring(game:HttpGet("https://raw.githubusercontent.com/TynaRan/ShadowDarkness/main/Loader.lua"))()
-local m2=m1.Window.new("CrimDev v1.0")
+local m2=m1.Window.new("CrimDev v1.1")
 local m3=m2:AddTab("Main")
 local m4=m3:AddSection("left","Combat")
-local m5=m3:AddSection("right","Security")
+local m5=m3:AddSection("right","Bypass(rvvz nigger")
 
 local m5a={Camlock=false,Smooth=true,SmoothValue=0.2,Key=Enum.KeyCode.Q,Mobile=game:GetService("UserInputService").TouchEnabled}
 local m6=nil
@@ -505,7 +505,7 @@ m5:AddToggle("No WalkSpeed Detection", false, function(state)
   end
  end
 end)
-local taba = window:AddTab("Info")
+local taba = m2:AddTab("Info")
 local left = taba:AddSection("left", "Credits")
 left:AddLabel("Credits:")
 left:AddLabel("TynaRan")

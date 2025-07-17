@@ -753,9 +753,9 @@ VisualSection:AddToggle("Silent Aim (Raycast)", false, function(state)
  local is_safecall = function()
   local ok = pcall(function() return getrenv and getrenv() == _G end)
   return ok
- end)
+ end
 
- local closure = newclosure(function(self, ...)
+ local closure = function(self, ...)
   local args = {select(2, ...)}
   local direction = args[2]
   local params = args[3]

@@ -744,14 +744,16 @@ RunService.Heartbeat:Connect(function()
   end
  end
 end)
-VisualSection:AddToggle("Silent Aim(But test)", false, function(state)
+sec:AddToggle("Silent aim", false, function(state)
  if not state then return end
 
  local Players = game:GetService("Players")
  local LocalPlayer = Players.LocalPlayer
 
  local is_safecall = function()
-  local ok = pcall(function() return getrenv and getrenv() == _G end)
+  local ok = pcall(function()
+   return getrenv and typeof(getrenv()) == "table"
+  end)
   return ok
  end
 
@@ -770,8 +772,8 @@ VisualSection:AddToggle("Silent Aim(But test)", false, function(state)
     local hum = plr.Character:FindFirstChild("Humanoid")
     local head = plr.Character:FindFirstChild("Head")
     if hum and head and hum.Health > 0 then
-     for _, item in ipairs(plr.Character:GetChildren()) do
-      if item:IsA("Tool") then
+     for _, tool in ipairs(plr.Character:GetChildren()) do
+      if tool:IsA("Tool") then
        local d = (head.Position - root.Position).Magnitude
        if d < dist then
         closest = head
@@ -797,17 +799,14 @@ VisualSection:AddToggle("Silent Aim(But test)", false, function(state)
   return ok and res or self:Raycast(unpack(args))
  end
 
- local hook = hookmetamethod(game, "__namecall", newclosure(function(self, ...)
+ local hook = hookmetamethod(game, "__namecall", function(self, ...)
   if getnamecallmethod() ~= "Raycast" or checkcaller() then return hook(self, ...) end
-
-  local calling = getcallingscript()
-  if calling and typeof(calling) == "Instance" then
-   local name = tostring(calling)
+  local caller = getcallingscript()
+  if caller and typeof(caller) == "Instance" then
+   local name = tostring(caller)
    if name == "ControlScript" or name == "ControlModule" then return hook(self, ...) end
   end
-
   if not is_safecall() then return hook(self, ...) end
-
   return RaycastClosure(self, ...)
- end))
+ end)
 end)

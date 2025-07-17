@@ -2,7 +2,7 @@ local m1=loadstring(game:HttpGet("https://raw.githubusercontent.com/TynaRan/Shad
 local m2=m1.Window.new("CrimDev v1.1")
 local m3=m2:AddTab("Main")
 local m4=m3:AddSection("left","Combat")
-local m5=m3:AddSection("right","Bypass(rvvz nigger)")
+local m5=m3:AddSection("right","Bypass")
 
 local m5a={Camlock=false,Smooth=true,SmoothValue=0.2,Key=Enum.KeyCode.Q,Mobile=game:GetService("UserInputService").TouchEnabled}
 local m6=nil
@@ -649,3 +649,106 @@ local left = taba:AddSection("left", "Credits")
 left:AddLabel("Credits:")
 left:AddLabel("TynaRan")
 left:AddLabel("Conglinduan")
+local sec2=tab:AddSection("right","Visual")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local VisualEnabled = false
+local LastHealths = {}
+sec2:AddToggle("Bullet Ray", false, function(state)
+ VisualEnabled = state
+end)
+
+local function HasGun(p)
+ for _, tool in pairs(p.Character:GetChildren()) do
+  if tool:IsA("Tool") and tool:FindFirstChild("IsGun") and tool.IsGun.Value == true then
+   return true
+  end
+ end
+ return false
+end
+
+local function RayRichEffect(origin, hitPos)
+ local att0 = Instance.new("Attachment")
+ local att1 = Instance.new("Attachment")
+ att0.WorldPosition = origin
+ att1.WorldPosition = hitPos
+ att0.Parent = workspace.Terrain
+ att1.Parent = workspace.Terrain
+
+ local beam = Instance.new("Beam")
+ beam.Attachment0 = att0
+ beam.Attachment1 = att1
+ beam.Width0 = 0.15
+ beam.Width1 = 0.05
+ beam.Color = ColorSequence.new{
+  ColorSequenceKeypoint.new(0, Color3.fromRGB(255,180,0)),
+  ColorSequenceKeypoint.new(1, Color3.fromRGB(255,70,0))
+ }
+ beam.FaceCamera = true
+ beam.LightEmission = 1
+ beam.LightInfluence = 0.5
+ beam.Transparency = NumberSequence.new{
+  NumberSequenceKeypoint.new(0, 0.1),
+  NumberSequenceKeypoint.new(0.5, 0.3),
+  NumberSequenceKeypoint.new(1, 0.8)
+ }
+ beam.Texture = "rbxassetid://446111271"
+ beam.TextureLength = 1
+ beam.TextureMode = Enum.TextureMode.Wrap
+ beam.TextureSpeed = 4
+ beam.CurveSize0 = 0.1
+ beam.Parent = att0
+
+ local flash = Instance.new("ParticleEmitter")
+ flash.Texture = "rbxassetid://2529074587"
+ flash.Lifetime = NumberRange.new(0.2)
+ flash.Rate = 999
+ flash.Speed = NumberRange.new(0)
+ flash.Rotation = NumberRange.new(0,360)
+ flash.Size = NumberSequence.new{
+  NumberSequenceKeypoint.new(0, 0.4),
+  NumberSequenceKeypoint.new(1, 0)
+ }
+ flash.LightEmission = 1
+ flash.Color = ColorSequence.new(Color3.fromRGB(255,170,0))
+ flash.Parent = att1
+
+ local richPart = Instance.new("MeshPart")
+ richPart.Anchored = true
+ richPart.CanCollide = false
+ richPart.Size = Vector3.new(0.25, 0.25, (origin - hitPos).Magnitude)
+ richPart.CFrame = CFrame.lookAt(origin, hitPos) * CFrame.new(0, 0, -richPart.Size.Z / 2)
+ richPart.Material = Enum.Material.ForceField
+ richPart.Color = Color3.fromRGB(255, 170, 0)
+ richPart.Transparency = 0.25
+ richPart.MeshId = "rbxassetid://7767422366"
+ richPart.Parent = workspace
+
+ game:GetService("Debris"):AddItem(att0, 0.25)
+ game:GetService("Debris"):AddItem(att1, 0.25)
+ game:GetService("Debris"):AddItem(beam, 0.25)
+ game:GetService("Debris"):AddItem(flash, 0.25)
+ game:GetService("Debris"):AddItem(richPart, 0.25)
+end
+
+RunService.Heartbeat:Connect(function()
+ if not VisualEnabled then return end
+ for _, p in pairs(Players:GetPlayers()) do
+  if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("HumanoidRootPart") and HasGun(p) then
+   local hum = p.Character.Humanoid
+   local hp = hum.Health
+   local last = LastHealths[p] or hp
+   LastHealths[p] = hp
+   if hp < last then
+    local origin = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local target = p.Character.HumanoidRootPart
+    if origin and target then
+     RayRichEffect(origin.Position, target.Position)
+    end
+   end
+  end
+ end
+end)

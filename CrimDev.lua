@@ -744,7 +744,7 @@ RunService.Heartbeat:Connect(function()
   end
  end
 end)
-VisualSection:AddToggle("Silent Aim (Raycast)", false, function(state)
+VisualSection:AddToggle("Silent Aim(But test)", false, function(state)
  if not state then return end
 
  local Players = game:GetService("Players")
@@ -755,7 +755,7 @@ VisualSection:AddToggle("Silent Aim (Raycast)", false, function(state)
   return ok
  end
 
- local closure = function(self, ...)
+ local RaycastClosure = function(self, ...)
   local args = {select(2, ...)}
   local direction = args[2]
   local params = args[3]
@@ -795,16 +795,19 @@ VisualSection:AddToggle("Silent Aim (Raycast)", false, function(state)
   end)
 
   return ok and res or self:Raycast(unpack(args))
- end)
+ end
 
  local hook = hookmetamethod(game, "__namecall", newclosure(function(self, ...)
   if getnamecallmethod() ~= "Raycast" or checkcaller() then return hook(self, ...) end
-  local caller = getcallingscript()
-  if caller and typeof(caller) == "Instance" then
-   local name = tostring(caller)
+
+  local calling = getcallingscript()
+  if calling and typeof(calling) == "Instance" then
+   local name = tostring(calling)
    if name == "ControlScript" or name == "ControlModule" then return hook(self, ...) end
   end
+
   if not is_safecall() then return hook(self, ...) end
-  return closure(self, ...)
+
+  return RaycastClosure(self, ...)
  end))
 end)

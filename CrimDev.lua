@@ -663,7 +663,7 @@ end)
 
 local function HasGun(p)
  for _, tool in pairs(p.Character:GetChildren()) do
-  if tool:IsA("Tool") and tool:FindFirstChild("IsGun") and tool.IsGun.Value == true then
+  if tool:IsA("Tool") and tool:FindFirstChild("IsGun") then
    return true
   end
  end

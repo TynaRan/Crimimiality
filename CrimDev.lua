@@ -744,55 +744,67 @@ RunService.Heartbeat:Connect(function()
   end
  end
 end)
-VisualSection:AddToggle("Silent Aim", false, function(state)
+VisualSection:AddToggle("Silent Aim (Raycast)", false, function(state)
  if not state then return end
 
  local Players = game:GetService("Players")
  local LocalPlayer = Players.LocalPlayer
 
- local hook = hookmetamethod(game, "__namecall", function(self, ...)
-  if getnamecallmethod() ~= "Raycast" or checkcaller() then
-   return hook(self, ...)
-  end
+ local is_safecall = newclosure(function()
+  local ok = pcall(function() return getrenv and getrenv() == _G end)
+  return ok
+ end)
 
+ local closure = newclosure(function(self, ...)
   local args = {select(2, ...)}
   local direction = args[2]
   local params = args[3]
 
-  local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-  if not root then return hook(self, ...) end
+  local character = LocalPlayer.Character
+  local root = character and character:FindFirstChild("HumanoidRootPart")
+  if not root or typeof(direction) ~= "Vector3" then return self:Raycast(unpack(args)) end
 
-  local closest, dist = nil, 100
+  local closest, dist = nil, math.huge
   for _, plr in ipairs(Players:GetPlayers()) do
    if plr ~= LocalPlayer and plr.Character then
     local hum = plr.Character:FindFirstChild("Humanoid")
     local head = plr.Character:FindFirstChild("Head")
     if hum and head and hum.Health > 0 then
-     local hasTool = false
      for _, item in ipairs(plr.Character:GetChildren()) do
       if item:IsA("Tool") then
-       hasTool = true
+       local d = (head.Position - root.Position).Magnitude
+       if d < dist then
+        closest = head
+        dist = d
+       end
        break
       end
-     end
-
-     if not hasTool then continue end
-
-     local d = (head.Position - root.Position).Magnitude
-     if d < dist then
-      closest = head
-      dist = d
      end
     end
    end
   end
 
-  if not closest then return hook(self, ...) end
+  if not closest then return self:Raycast(unpack(args)) end
 
   args[1] = root
   args[2] = CFrame.lookAt(root.Position, closest.Position).LookVector * direction.Magnitude
   args[3] = params
 
-  return self:Raycast(unpack(args))
+  local ok, res = pcall(function()
+   return self:Raycast(unpack(args))
+  end)
+
+  return ok and res or self:Raycast(unpack(args))
  end)
+
+ local hook = hookmetamethod(game, "__namecall", newclosure(function(self, ...)
+  if getnamecallmethod() ~= "Raycast" or checkcaller() then return hook(self, ...) end
+  local caller = getcallingscript()
+  if caller and typeof(caller) == "Instance" then
+   local name = tostring(caller)
+   if name == "ControlScript" or name == "ControlModule" then return hook(self, ...) end
+  end
+  if not is_safecall() then return hook(self, ...) end
+  return closure(self, ...)
+ end))
 end)

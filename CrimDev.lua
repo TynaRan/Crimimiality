@@ -744,7 +744,7 @@ RunService.Heartbeat:Connect(function()
   end
  end
 end)
-sec:AddToggle("Silent aim", false, function(state)
+VisualSection:AddToggle("Silent Aim", false, function(state)
  if not state then return end
 
  local Players = game:GetService("Players")

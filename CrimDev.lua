@@ -744,20 +744,15 @@ RunService.Heartbeat:Connect(function()
   end
  end
 end)
-VisualSection:AddToggle("Silent Aim (Beta)", false, function(state)
+VisualSection:AddToggle("Silent Aim", false, function(state)
  if not state then return end
 
  local Players = game:GetService("Players")
  local LocalPlayer = Players.LocalPlayer
 
- local oldnamecall = hookmetamethod(game, "__namecall", function(self, ...)
+ local hook = hookmetamethod(game, "__namecall", function(self, ...)
   if getnamecallmethod() ~= "Raycast" or checkcaller() then
-   return oldnamecall(self, ...)
-  end
-
-  local calling = getcallingscript()
-  if calling and (tostring(calling) == "ControlScript" or tostring(calling) == "ControlModule") then
-   return oldnamecall(self, ...)
+   return hook(self, ...)
   end
 
   local args = {select(2, ...)}
@@ -765,24 +760,34 @@ VisualSection:AddToggle("Silent Aim (Beta)", false, function(state)
   local params = args[3]
 
   local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-  if not root then return oldnamecall(self, ...) end
+  if not root then return hook(self, ...) end
 
   local closest, dist = nil, 100
-  for _, plr in pairs(Players:GetPlayers()) do
+  for _, plr in ipairs(Players:GetPlayers()) do
    if plr ~= LocalPlayer and plr.Character then
-    local h = plr.Character:FindFirstChild("Humanoid")
-    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-    if h and hrp and h.Health > 0 then
-     local d = (hrp.Position - root.Position).Magnitude
+    local hum = plr.Character:FindFirstChild("Humanoid")
+    local head = plr.Character:FindFirstChild("Head")
+    if hum and head and hum.Health > 0 then
+     local hasTool = false
+     for _, item in ipairs(plr.Character:GetChildren()) do
+      if item:IsA("Tool") then
+       hasTool = true
+       break
+      end
+     end
+
+     if not hasTool then continue end
+
+     local d = (head.Position - root.Position).Magnitude
      if d < dist then
-      closest = hrp
+      closest = head
       dist = d
      end
     end
    end
   end
 
-  if not closest then return oldnamecall(self, ...) end
+  if not closest then return hook(self, ...) end
 
   args[1] = root
   args[2] = CFrame.lookAt(root.Position, closest.Position).LookVector * direction.Magnitude

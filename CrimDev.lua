@@ -649,104 +649,139 @@ local left = taba:AddSection("left", "Credits")
 left:AddLabel("Credits:")
 left:AddLabel("TynaRan")
 left:AddLabel("Conglinduan")
-local sec2=tab:AddSection("right","Visual")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local PlayersService = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
+local WorkspaceService = game:GetService("Workspace")
+local DebrisService = game:GetService("Debris")
+local LocalPlayer = PlayersService.LocalPlayer
 
-local VisualEnabled = false
-local LastHealths = {}
-sec2:AddToggle("Bullet Ray", false, function(state)
- VisualEnabled = state
+local VisualToggle = false
+local HealthRecords = {}
+
+local VisualSection = tab:AddSection("right", "Visual")
+VisualSection:AddToggle("Bullet Ray", false, function(state)
+ VisualToggle = state
 end)
 
-local function HasGun(p)
- for _, tool in pairs(p.Character:GetChildren()) do
-  if tool:IsA("Tool") and tool:FindFirstChild("IsGun") then
+local function PlayerHasTool(targetPlayer)
+ for _, toolInstance in pairs(targetPlayer.Character:GetChildren()) do
+  if toolInstance:IsA("Tool") then
    return true
   end
  end
  return false
 end
 
-local function RayRichEffect(origin, hitPos)
- local att0 = Instance.new("Attachment")
- local att1 = Instance.new("Attachment")
- att0.WorldPosition = origin
- att1.WorldPosition = hitPos
- att0.Parent = workspace.Terrain
- att1.Parent = workspace.Terrain
+local function CreateBulletVisual(startPos, endPos)
+ local direction = endPos - startPos
+ local range = direction.Magnitude
 
- local beam = Instance.new("Beam")
- beam.Attachment0 = att0
- beam.Attachment1 = att1
- beam.Width0 = 0.15
- beam.Width1 = 0.05
- beam.Color = ColorSequence.new{
-  ColorSequenceKeypoint.new(0, Color3.fromRGB(255,180,0)),
-  ColorSequenceKeypoint.new(1, Color3.fromRGB(255,70,0))
- }
- beam.FaceCamera = true
- beam.LightEmission = 1
- beam.LightInfluence = 0.5
- beam.Transparency = NumberSequence.new{
-  NumberSequenceKeypoint.new(0, 0.1),
-  NumberSequenceKeypoint.new(0.5, 0.3),
-  NumberSequenceKeypoint.new(1, 0.8)
- }
- beam.Texture = "rbxassetid://446111271"
- beam.TextureLength = 1
- beam.TextureMode = Enum.TextureMode.Wrap
- beam.TextureSpeed = 4
- beam.CurveSize0 = 0.1
- beam.Parent = att0
+ local attachmentStart = Instance.new("Attachment")
+ local attachmentEnd = Instance.new("Attachment")
+ attachmentStart.WorldPosition = startPos
+ attachmentEnd.WorldPosition = endPos
+ attachmentStart.Parent = WorkspaceService.Terrain
+ attachmentEnd.Parent = WorkspaceService.Terrain
 
- local flash = Instance.new("ParticleEmitter")
- flash.Texture = "rbxassetid://2529074587"
- flash.Lifetime = NumberRange.new(0.2)
- flash.Rate = 999
- flash.Speed = NumberRange.new(0)
- flash.Rotation = NumberRange.new(0,360)
- flash.Size = NumberSequence.new{
-  NumberSequenceKeypoint.new(0, 0.4),
+ local beamEffect = Instance.new("Beam")
+ beamEffect.Attachment0 = attachmentStart
+ beamEffect.Attachment1 = attachmentEnd
+ beamEffect.Width0 = 0.5
+ beamEffect.Width1 = 0.35
+ beamEffect.Color = ColorSequence.new{
+  ColorSequenceKeypoint.new(0, Color3.fromRGB(0,230,255)),
+  ColorSequenceKeypoint.new(1, Color3.fromRGB(0,100,210))
+ }
+ beamEffect.FaceCamera = true
+ beamEffect.LightEmission = 1
+ beamEffect.LightInfluence = 1
+ beamEffect.Texture = "rbxassetid://446111271"
+ beamEffect.TextureMode = Enum.TextureMode.Wrap
+ beamEffect.TextureSpeed = 8
+ beamEffect.CurveSize0 = 0.3
+ beamEffect.Transparency = NumberSequence.new{
+  NumberSequenceKeypoint.new(0, 0.02),
+  NumberSequenceKeypoint.new(0.5, 0.08),
+  NumberSequenceKeypoint.new(1, 0.5)
+ }
+ beamEffect.Parent = attachmentStart
+
+ local particleFlash = Instance.new("ParticleEmitter")
+ particleFlash.Texture = "rbxassetid://2529074587"
+ particleFlash.Lifetime = NumberRange.new(0.25)
+ particleFlash.Rate = 999
+ particleFlash.Speed = NumberRange.new(0)
+ particleFlash.ZOffset = 2
+ particleFlash.Rotation = NumberRange.new(0,360)
+ particleFlash.Size = NumberSequence.new{
+  NumberSequenceKeypoint.new(0, 0.7),
   NumberSequenceKeypoint.new(1, 0)
  }
- flash.LightEmission = 1
- flash.Color = ColorSequence.new(Color3.fromRGB(255,170,0))
- flash.Parent = att1
+ particleFlash.LightEmission = 1
+ particleFlash.Color = ColorSequence.new{
+  ColorSequenceKeypoint.new(0, Color3.fromRGB(0,220,255)),
+  ColorSequenceKeypoint.new(1, Color3.fromRGB(0,120,220))
+ }
+ particleFlash.Parent = attachmentEnd
 
- local richPart = Instance.new("MeshPart")
- richPart.Anchored = true
- richPart.CanCollide = false
- richPart.Size = Vector3.new(0.25, 0.25, (origin - hitPos).Magnitude)
- richPart.CFrame = CFrame.lookAt(origin, hitPos) * CFrame.new(0, 0, -richPart.Size.Z / 2)
- richPart.Material = Enum.Material.ForceField
- richPart.Color = Color3.fromRGB(255, 170, 0)
- richPart.Transparency = 0.25
- richPart.MeshId = "rbxassetid://7767422366"
- richPart.Parent = workspace
+ local pointLight = Instance.new("PointLight")
+ pointLight.Color = Color3.fromRGB(0,200,255)
+ pointLight.Range = 6
+ pointLight.Brightness = 5
+ pointLight.Shadows = true
+ pointLight.Parent = attachmentEnd
 
- game:GetService("Debris"):AddItem(att0, 0.25)
- game:GetService("Debris"):AddItem(att1, 0.25)
- game:GetService("Debris"):AddItem(beam, 0.25)
- game:GetService("Debris"):AddItem(flash, 0.25)
- game:GetService("Debris"):AddItem(richPart, 0.25)
+ local meshRay = Instance.new("MeshPart")
+ meshRay.Anchored = true
+ meshRay.CanCollide = false
+ meshRay.Size = Vector3.new(0.4, 0.4, range)
+ meshRay.CFrame = CFrame.lookAt(startPos, endPos) * CFrame.new(0, 0, -range / 2)
+ meshRay.Material = Enum.Material.Neon
+ meshRay.Color = Color3.fromRGB(0,200,255)
+ meshRay.Transparency = 0.1
+ meshRay.MeshId = "rbxassetid://7767422366"
+ meshRay.Parent = WorkspaceService
+
+ local neonRay = Instance.new("Part")
+ neonRay.Anchored = true
+ neonRay.CanCollide = false
+ neonRay.Size = Vector3.new(0.25, 0.25, range)
+ neonRay.CFrame = CFrame.lookAt(startPos, endPos) * CFrame.new(0, 0, -range / 2)
+ neonRay.Material = Enum.Material.Neon
+ neonRay.Color = Color3.fromRGB(0,230,255)
+ neonRay.Transparency = 0.05
+ neonRay.Parent = WorkspaceService
+
+ local hitSound = Instance.new("Sound")
+ hitSound.SoundId = "rbxassetid://160432334"
+ hitSound.Volume = 1
+ hitSound.PlayOnRemove = true
+ hitSound.Parent = attachmentEnd
+ hitSound:Destroy()
+
+ DebrisService:AddItem(attachmentStart, 0.35)
+ DebrisService:AddItem(attachmentEnd, 0.35)
+ DebrisService:AddItem(beamEffect, 0.35)
+ DebrisService:AddItem(particleFlash, 0.35)
+ DebrisService:AddItem(pointLight, 0.35)
+ DebrisService:AddItem(meshRay, 0.35)
+ DebrisService:AddItem(neonRay, 0.35)
 end
 
 RunService.Heartbeat:Connect(function()
- if not VisualEnabled then return end
- for _, p in pairs(Players:GetPlayers()) do
-  if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character:FindFirstChild("HumanoidRootPart") and HasGun(p) then
-   local hum = p.Character.Humanoid
-   local hp = hum.Health
-   local last = LastHealths[p] or hp
-   LastHealths[p] = hp
-   if hp < last then
-    local origin = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    local target = p.Character.HumanoidRootPart
-    if origin and target then
-     RayRichEffect(origin.Position, target.Position)
+ if not VisualToggle then return end
+ for _, targetPlayer in pairs(PlayersService:GetPlayers()) do
+  if targetPlayer ~= LocalPlayer and targetPlayer.Character and PlayerHasTool(targetPlayer) then
+   local humanoid = targetPlayer.Character:FindFirstChild("Humanoid")
+   local rootPart = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+   local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+   if humanoid and rootPart and localRoot then
+    local currentHealth = humanoid.Health
+    local previousHealth = HealthRecords[targetPlayer] or currentHealth
+    HealthRecords[targetPlayer] = currentHealth
+    local distance = (rootPart.Position - localRoot.Position).Magnitude
+    if distance < 50 and currentHealth < previousHealth then
+     CreateBulletVisual(localRoot.Position, rootPart.Position)
     end
    end
   end

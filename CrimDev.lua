@@ -362,7 +362,7 @@ m5:AddToggle("Anti Lag",false,function(v)
  if v then
   local m6=game:GetService("Lighting")
   m6.FogEnd=1e9
-  m6.Brightness=1
+  m6.Brightness=4
   m6.GlobalShadows=false
   for _,o in pairs(m6:GetDescendants())do
    if o:IsA("BloomEffect")or o:IsA("BlurEffect")or o:IsA("SunRaysEffect")or o:IsA("ColorCorrectionEffect")then o.Enabled=false end

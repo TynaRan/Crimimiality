@@ -452,50 +452,7 @@ m4:AddToggle("Anti Animation",false,function(v)
   a.Parent=game:GetService("CoreGui")
  end
 end)
-local m5b={Silent=false,FOV=130,Prediction=0.13,HitChance=100}
-local m6=nil
 
-m4:AddTextbox("FOV","130",function(v)m5b.FOV=tonumber(v)or 130 end)
-m4:AddTextbox("Prediction","0.13",function(v)m5b.Prediction=tonumber(v)or 0.13 end)
-m4:AddTextbox("HitChance","100",function(v)m5b.HitChance=tonumber(v)or 100 end)
-
-m4:AddToggle("Silent Aim",false,function(v)
- m5b.Silent=v
- if v then
-  local p=game:GetService("Players")
-  local l=p.LocalPlayer
-  local c=workspace.CurrentCamera
-  local function getClosest()
-   local t,d=nil,m5b.FOV
-   for _,x in ipairs(p:GetPlayers())do
-    if x~=l and x.Character and x.Character:FindFirstChild("HumanoidRootPart") and x.Character:FindFirstChild("Humanoid") and x.Character.Humanoid.Health>0 then
-     local pos=c:WorldToViewportPoint(x.Character.HumanoidRootPart.Position)
-     local dist=(Vector2.new(pos.X,pos.Y)-Vector2.new(c.ViewportSize.X/2,c.ViewportSize.Y/2)).Magnitude
-     if dist<d then t=x.Character.HumanoidRootPart d=dist end
-    end
-   end
-   return t
-  end
-  m6=hookmetamethod(game,"__namecall",newcclosure(function(self,...)
-   local args={...}
-   local method=getnamecallmethod()
-   if method=="FireServer" and tostring(self):lower():find("hit") and m5b.Silent then
-    if math.random(0,100)<=m5.HitChance then
-     local t=getClosest()
-     if t then
-      local predicted=t.Position+(t.Velocity*m5.Prediction)
-      args[2].part=t
-      args[2].h=t
-      args[2].pos=predicted
-     end
-    end
-   end
-   return m6(self,unpack(args))
-  end))
- else
-  m5b.Silent=false
- end
-end)  
 m4:AddToggle("Infinite Stamina",false,function(v)
  if v then
   local f=getupvalue(getupvalue(getrenv()._G.S_Take,2),1)
@@ -786,4 +743,51 @@ RunService.Heartbeat:Connect(function()
    end
   end
  end
+end)
+VisualSection:AddToggle("Silent Aim (Beta)", false, function(state)
+ if not state then return end
+
+ local Players = game:GetService("Players")
+ local LocalPlayer = Players.LocalPlayer
+
+ local oldnamecall = hookmetamethod(game, "__namecall", function(self, ...)
+  if getnamecallmethod() ~= "Raycast" or checkcaller() then
+   return oldnamecall(self, ...)
+  end
+
+  local calling = getcallingscript()
+  if calling and (tostring(calling) == "ControlScript" or tostring(calling) == "ControlModule") then
+   return oldnamecall(self, ...)
+  end
+
+  local args = {select(2, ...)}
+  local direction = args[2]
+  local params = args[3]
+
+  local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+  if not root then return oldnamecall(self, ...) end
+
+  local closest, dist = nil, 100
+  for _, plr in pairs(Players:GetPlayers()) do
+   if plr ~= LocalPlayer and plr.Character then
+    local h = plr.Character:FindFirstChild("Humanoid")
+    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+    if h and hrp and h.Health > 0 then
+     local d = (hrp.Position - root.Position).Magnitude
+     if d < dist then
+      closest = hrp
+      dist = d
+     end
+    end
+   end
+  end
+
+  if not closest then return oldnamecall(self, ...) end
+
+  args[1] = root
+  args[2] = CFrame.lookAt(root.Position, closest.Position).LookVector * direction.Magnitude
+  args[3] = params
+
+  return self:Raycast(unpack(args))
+ end)
 end)

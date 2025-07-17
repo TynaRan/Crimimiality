@@ -750,7 +750,7 @@ VisualSection:AddToggle("Silent Aim (Raycast)", false, function(state)
  local Players = game:GetService("Players")
  local LocalPlayer = Players.LocalPlayer
 
- local is_safecall = newclosure(function()
+ local is_safecall = function()
   local ok = pcall(function() return getrenv and getrenv() == _G end)
   return ok
  end)

@@ -1,8 +1,6 @@
 repeat
 	task.wait()
 until game:IsLoaded()
---hey skid dont skid pls pls pls pls :DDDDDDD
---open adonis bypass btw not mine but yeah its here ^^^^
 do
 	local function isAdonisAC(table)
 		return rawget(table, "Detected")
@@ -401,7 +399,7 @@ esp.options.healthText = false
 esp:Load()
 
 --shit stuff
-local repo = "https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/"
+local repo = "https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/"
 
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
